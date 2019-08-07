@@ -1,0 +1,28 @@
+---
+
+- name: clone dotfiles repository
+  git:
+    repo: "{{ dotfiles_repository }}"
+    dest: /root/.dotfiles
+    version: master
+    accept_hostkey: yes
+  register: dotfiles_checkout
+
+- name: check current profile
+  stat:
+    path: /root/.profile
+  register: root_profile_stat
+
+- name: postinstall dotfiles
+  shell: /root/.dotfiles/install.sh esh emacs vi tmux utilsh
+  when: dotfiles_checkout is changed or root_profile_stat.stat.exists == False
+
+- name: clean dotfiles conf
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    - /root/.dotfiles/esh/conf/auto_tmux
+    - /root/.dotfiles/esh/conf/preferred_shell
+    - /root/.dotfiles/esh/conf/trusted_host
+  when: dotfiles_checkout is changed or root_profile_stat.stat.exists == False
