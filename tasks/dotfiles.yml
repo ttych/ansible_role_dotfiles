@@ -36,8 +36,7 @@
         path: "{{ item }}"
         state: absent
       with_items:
-        - /root/.dotfiles/esh/conf/preferred_shell
-        - /root/.dotfiles/esh/conf/trusted_host
+        - "{{ homedir.stdout }}/.dotfiles/esh/conf/auto_tmux"
       when: dotfiles_checkout is changed or profile_stat.stat.exists == False
 
   become: yes
