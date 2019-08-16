@@ -1,28 +1,44 @@
 ---
 
-- name: clone dotfiles repository
-  git:
-    repo: "{{ dotfiles_repository }}"
-    dest: /root/.dotfiles
-    version: master
-    accept_hostkey: yes
-  register: dotfiles_checkout
+- block:
+    - name: whoami
+      shell: whoami
+      changed_when: false
+      register: whoami
 
-- name: check current profile
-  stat:
-    path: /root/.profile
-  register: root_profile_stat
+    - name:
+      shell: >
+        getent passwd {{ user }} | cut -d: -f6
+      changed_when: false
+      register: homedir
 
-- name: postinstall dotfiles
-  shell: /root/.dotfiles/install.sh esh emacs vi tmux utilsh
-  when: dotfiles_checkout is changed or root_profile_stat.stat.exists == False
+    - name: clone dotfiles repository
+      git:
+        repo: "{{ dotfiles_repository }}"
+        dest: "{{ homedir.stdout }}/.dotfiles"
+        version: master
+        accept_hostkey: yes
+        umask: "077"
+        force: yes
+      register: dotfiles_checkout
 
-- name: clean dotfiles conf
-  file:
-    path: "{{ item }}"
-    state: absent
-  with_items:
-    - /root/.dotfiles/esh/conf/auto_tmux
-    - /root/.dotfiles/esh/conf/preferred_shell
-    - /root/.dotfiles/esh/conf/trusted_host
-  when: dotfiles_checkout is changed or root_profile_stat.stat.exists == False
+    - name: check current profile
+      stat:
+        path: "{{ homedir.stdout }}/.profile"
+      register: profile_stat
+
+    - name: postinstall dotfiles
+      shell: "{{ homedir.stdout }}/.dotfiles/install.sh esh emacs vi tmux utilsh"
+      when: dotfiles_checkout is changed or profile_stat.stat.exists == False
+
+    - name: clean dotfiles conf
+      file:
+        path: "{{ item }}"
+        state: absent
+      with_items:
+        - /root/.dotfiles/esh/conf/preferred_shell
+        - /root/.dotfiles/esh/conf/trusted_host
+      when: dotfiles_checkout is changed or profile_stat.stat.exists == False
+
+  become: yes
+  become_user: "{{ user }}"
