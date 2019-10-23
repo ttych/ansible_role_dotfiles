@@ -6,13 +6,17 @@
       changed_when: false
       register: whoami
 
-    - name:
+    - fail:
+        msg: "unable to switch to {{ user }}"
+      when: user != whoami.stdout
+
+    - name: "get homedir for {{ user }}"
       shell: >
         getent passwd {{ user }} | cut -d: -f6
       changed_when: false
       register: homedir
 
-    - name: clone dotfiles repository
+    - name: "clone dotfiles repository for {{ user }}"
       git:
         repo: "{{ dotfiles_repository }}"
         dest: "{{ homedir.stdout }}/.dotfiles"
@@ -22,13 +26,13 @@
         force: yes
       register: dotfiles_checkout
 
-    - name: check current profile
+    - name: "check current profile for {{ user }}"
       stat:
         path: "{{ homedir.stdout }}/.profile"
       register: profile_stat
 
-    - name: postinstall dotfiles
-      shell: "{{ homedir.stdout }}/.dotfiles/install.sh esh emacs vi tmux utilsh"
+    - name: "postinstall dotfiles for {{ user }}"
+      shell: "{{ homedir.stdout }}/.dotfiles/install.sh esh emacs vi tmux utilsh X xbindkeys git screen"
       when: dotfiles_checkout is changed or profile_stat.stat.exists == False
 
     - name: clean dotfiles conf

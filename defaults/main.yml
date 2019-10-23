@@ -1,2 +1,4 @@
 ---
-# defaults file for root_dotfiles
+dotfiles_users:
+  - root
+  - admin

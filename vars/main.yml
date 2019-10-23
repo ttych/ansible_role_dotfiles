@@ -1,4 +1,2 @@
 ---
-# vars file for root_dotfiles
-
 dotfiles_repository: https://github.com/ttych/dotfiles.git
