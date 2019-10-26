@@ -2,6 +2,6 @@
 # tasks file for root_dotfiles
 
 - include_tasks: dotfiles.yml
-  with_items: "{{ dotfiles_users }}"
+  loop: "{{ dotfiles_users }}"
   loop_control:
     loop_var: user
